@@ -1,0 +1,8 @@
+const node=document.getElementById('settlement');const state=JSON.parse(node.textContent);const notice=document.getElementById('notice');let busy=false;
+async function call(url,body){if(busy)return;busy=true;if(notice)notice.textContent='正在处理结算批…';document.querySelectorAll('button').forEach(b=>b.disabled=true);try{const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const answer=await response.json();if(!response.ok)throw Error(answer.message);location.href='/settlement?id='+encodeURIComponent(answer.id)}catch(error){if(notice)notice.textContent=error.message;document.querySelectorAll('button').forEach(b=>b.disabled=false)}finally{busy=false}}
+const on=(id,event,handler)=>{const el=document.getElementById(id);if(el)el.addEventListener(event,handler)};
+on('seed','click',()=>call('/api/settlements',{supplier:'样例供应商'}));
+document.querySelectorAll('[data-decision]').forEach(b=>b.addEventListener('click',()=>call('/api/settlements/'+state.id+'/review',{revision:state.revision,decision:b.dataset.decision})));
+on('post','click',()=>{if(state.status==='草稿')call('/api/settlements/'+state.id+'/post',{revision:state.revision})});
+on('ev_add','click',()=>{const cert=document.getElementById('ev_cert').value.trim();if(!cert){if(notice)notice.textContent='请输入证书号';return}const evidence={cert,kind:document.getElementById('ev_kind').value,valid_from:document.getElementById('ev_from').value.trim()||null,valid_to:document.getElementById('ev_to').value.trim()||null,received_on:document.getElementById('ev_received').value.trim()||null};call('/api/settlements/'+state.id+'/evidence',{evidence})});
+on('print','click',()=>window.print());
